@@ -1,5 +1,6 @@
 package com.example.reactor;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -12,14 +13,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
+@RequiredArgsConstructor
 @SpringBootApplication
 public class ReactorApplication implements CommandLineRunner {
 
     private final ApiWebClient webClient;
-
-    public ReactorApplication(ApiWebClient webClient) {
-        this.webClient = webClient;
-    }
+    private final CleanService cleanService;
 
     public static void main(String[] args) {
         SpringApplication.run(ReactorApplication.class, args);
@@ -27,14 +26,17 @@ public class ReactorApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+
         log.info("EXECUTING : command line runner");
 
-        List<Mono<ResourceDTO>> requests = IntStream.rangeClosed(1, 5).mapToObj(webClient::test).collect(Collectors.toList());
+        List<Mono<ResourceDTO>> requests = IntStream.rangeClosed(1, 5)
+                .mapToObj(webClient::test)
+                .collect(Collectors.toList());
 
-        Mono.zip(requests, objects -> {
-            log.info(Arrays.toString(objects));
-            return objects;
-        }).block();
+        Mono.zip(requests, objects -> objects)
+                .doOnSuccess(cleanService::test)
+                .doOnError(throwable -> log.error(throwable.getMessage()))
+                .block();
 
 
     }

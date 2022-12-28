@@ -11,13 +11,22 @@ import reactor.core.publisher.Mono;
 @Component
 public class ApiWebClient {
 
+    public static final int ERROR_CODE = 3;
+
     private final WebClient webClient = WebClient.builder()
             .baseUrl("https://63abb934cf281dba8c28cc1d.mockapi.io/resource/{id}")
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();
 
+    private final WebClient webClientError = WebClient.builder()
+            .baseUrl("https://63abb934cf281dba8c28cc1d.mockapi.io/resource/x")
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .build();
+
     public Mono<ResourceDTO> test(Integer id) {
-        log.info(id.toString());
+        if (id == ERROR_CODE) {
+            return webClientError.get().retrieve().bodyToMono(ResourceDTO.class);
+        }
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder.build(id))
                 .retrieve()
