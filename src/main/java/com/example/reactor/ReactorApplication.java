@@ -29,7 +29,7 @@ public class ReactorApplication implements CommandLineRunner {
 
         log.info("EXECUTING : command line runner");
 
-        List<Mono<ResourceDTO>> requests = IntStream.rangeClosed(1, 2)
+        List<Mono<ResourceDTO>> requests = IntStream.rangeClosed(1, 5)
                 .mapToObj(webClient::test)
                 .collect(Collectors.toList());
 

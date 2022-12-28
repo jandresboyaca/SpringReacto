@@ -29,8 +29,8 @@ public class ApiWebClient {
             return webClientError.get()
                     .retrieve()
                     .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals, clientResponse -> Mono.error(new MyCustomException()))
-                    .bodyToMono(ResourceDTO.class);
-                    //.onErrorResume(MyCustomException.class, e -> Mono.empty());
+                    .bodyToMono(ResourceDTO.class)
+                    .onErrorResume(MyCustomException.class, e -> Mono.just(new ResourceDTO()));
 
         }
         return webClient.get()
