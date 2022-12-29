@@ -1,5 +1,9 @@
-package com.example.reactor;
 
+package com.example.reactor.port;
+
+import com.example.reactor.MyCustomException;
+import com.example.reactor.dto.ChildResourceDTO;
+import com.example.reactor.dto.ResourceDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -7,9 +11,13 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.util.Logger;
 
 @Slf4j
 @Component
+/*
+ * {@link https://www.woolha.com/tutorials/project-reactor-error-handling-examples}
+ */
 public class ApiWebClient {
 
     public static final int ERROR_CODE = 3;
@@ -24,19 +32,20 @@ public class ApiWebClient {
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();
 
-    public Mono<ResourceDTO> test(Integer id) {
+    public Mono<? extends ResourceDTO> test(Integer id) {
         if (id == ERROR_CODE) {
             return webClientError.get()
                     .retrieve()
-                    .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals, clientResponse -> Mono.error(new MyCustomException()))
-                    .bodyToMono(ResourceDTO.class)
-                    .onErrorResume(MyCustomException.class, e -> Mono.just(new ResourceDTO()));
+                    .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals, clientResponse -> clientResponse.bodyToMono(String.class).flatMap(s -> Mono.error(new MyCustomException(s))))
+                    .bodyToMono(ChildResourceDTO.class)
+                    .doOnError(throwable -> log.error(throwable.getMessage()))
+                    .onErrorResume(MyCustomException.class, e -> Mono.just(ChildResourceDTO.builder().status(false).build()));
 
         }
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder.build(id))
                 .retrieve()
-                .bodyToMono(ResourceDTO.class);
+                .bodyToMono(ChildResourceDTO.class);
     }
 
 
