@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class Logger {
 
-    @Pointcut("@annotation(com.example.reactor.logAnnotation.LoggableClass)")
+    @Pointcut("@annotation(com.example.reactor.logAnnotation.LoggableReactor)")
     public void loggableMethod() {
     }
 
